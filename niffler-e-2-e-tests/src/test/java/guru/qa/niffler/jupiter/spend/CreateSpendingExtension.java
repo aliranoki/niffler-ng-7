@@ -1,23 +1,24 @@
-package guru.qa.niffler.jupiter;
+package guru.qa.niffler.jupiter.spend;
 
-import guru.qa.niffler.api.SpendApiClient;
+import guru.qa.niffler.api.spend.SpendApiClient;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.model.SpendJson;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 import java.util.Date;
 
-public class SpendExtension implements BeforeEachCallback, ParameterResolver {
+public class CreateSpendingExtension implements BeforeEachCallback {
 
     public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace
-            .create(SpendExtension.class);
+            .create(CreateSpendingExtension.class);
 
     private final SpendApiClient spendApiClient = new SpendApiClient();
 
     @Override
     public void beforeEach(ExtensionContext context) throws Exception {
-        AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Spend.class)
+        AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Spending.class)
                 .ifPresent(
                         anno -> {
                             SpendJson spendJson = new SpendJson(
@@ -36,22 +37,10 @@ public class SpendExtension implements BeforeEachCallback, ParameterResolver {
                             );
                             SpendJson createdSpend = spendApiClient.createSpend(spendJson);
                             context.getStore(NAMESPACE).put(
-                                    context.getUniqueId(), createdSpend
+                                    context.getUniqueId(),
+                                    createdSpend
                             );
                         }
                 );
-    }
-
-    @Override
-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().isAssignableFrom(SpendJson.class);
-    }
-
-    @Override
-    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return extensionContext.getStore(NAMESPACE).get(
-                extensionContext.getUniqueId(),
-                SpendJson.class
-        );
     }
 }
